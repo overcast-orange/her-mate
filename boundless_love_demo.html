@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boundless Love · 创意孵化器</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F4EF;
+    --card: #FFFFFF;
+    --ink: #1C1916;
+    --ink2: #6B6560;
+    --ink3: #A8A39E;
+    --border: #E8E3DC;
+    --accent: #C9572A;
+    --accent2: #4A7C6F;
+    --accent3: #7B5EA7;
+    --gold: #D4A84B;
+    --tag1-bg: #FEF0E8; --tag1: #C9572A;
+    --tag2-bg: #E8F3F0; --tag2: #2E6B5E;
+    --tag3-bg: #F0EBF8; --tag3: #6844A0;
+    --r: 16px;
+    --shadow: 0 2px 16px rgba(28,25,22,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── 顶部导航 ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(247,244,239,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  .nav-logo {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 17px; font-weight: 600;
+    color: var(--ink); letter-spacing: 0.02em;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .nav-logo span { font-size: 20px; }
+  .nav-pair {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--ink2);
+  }
+  .avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 500;
+    border: 2px solid var(--border);
+  }
+  .av-a { background: #FEE9DF; color: var(--accent); }
+  .av-b { background: #E2F0ED; color: var(--accent2); margin-left: -8px; }
+  .coin-badge {
+    background: var(--gold); color: #fff;
+    border-radius: 20px; padding: 3px 10px;
+    font-size: 12px; font-weight: 500;
+    display: flex; align-items: center; gap: 4px;
+  }
+
+  /* ── 主容器 ── */
+  .main { max-width: 480px; margin: 0 auto; padding: 20px 16px 100px; }
+
+  /* ── 顶部欢迎 ── */
+  .hello {
+    margin-bottom: 24px;
+  }
+  .hello-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--ink); line-height: 1.3;
+    margin-bottom: 4px;
+  }
+  .hello-sub { font-size: 14px; color: var(--ink2); }
+
+  /* ── 里程碑进度条 ── */
+  .milestone-card {
+    background: var(--ink);
+    border-radius: var(--r);
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    color: #fff;
+    position: relative; overflow: hidden;
+  }
+  .milestone-card::before {
+    content: '';
+    position: absolute; top: -30px; right: -20px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .milestone-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.5; margin-bottom: 6px; }
+  .milestone-title { font-family: 'Noto Serif SC', serif; font-size: 16px; margin-bottom: 14px; }
+  .milestone-bar-bg { background: rgba(255,255,255,0.12); border-radius: 4px; height: 6px; margin-bottom: 8px; }
+  .milestone-bar-fill { background: var(--gold); height: 6px; border-radius: 4px; transition: width 0.6s ease; }
+  .milestone-meta { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.6; }
+  .milestone-reward { margin-top: 10px; font-size: 12px; opacity: 0.7; display: flex; align-items: center; gap: 6px; }
+
+  /* ── 分类筛选 ── */
+  .filter-row {
+    display: flex; gap: 8px; margin-bottom: 16px;
+    overflow-x: auto; padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    flex-shrink: 0;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px; font-family: 'DM Sans', sans-serif;
+    color: var(--ink2); cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .filter-btn.active {
+    background: var(--ink); color: #fff; border-color: var(--ink);
+  }
+
+  /* ── 目标卡片 ── */
+  .goal-card {
+    background: var(--card);
+    border-radius: var(--r);
+    padding: 18px 18px 14px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    animation: slideIn 0.3s ease both;
+  }
+  .goal-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(28,25,22,0.11); }
+  @keyframes slideIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+  .goal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .goal-tag {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.04em;
+    border-radius: 6px; padding: 3px 8px;
+  }
+  .tag-idea { background: var(--tag1-bg); color: var(--tag1); }
+  .tag-future { background: var(--tag2-bg); color: var(--tag2); }
+  .tag-grow { background: var(--tag3-bg); color: var(--tag3); }
+
+  .goal-more { font-size: 18px; color: var(--ink3); padding: 0 4px; }
+  .goal-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 16px; font-weight: 600;
+    line-height: 1.4; margin-bottom: 12px; color: var(--ink);
+  }
+
+  /* 双人进度条 */
+  .progress-section { margin-bottom: 10px; }
+  .progress-labels {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: var(--ink2); margin-bottom: 6px;
+  }
+  .progress-track {
+    height: 8px; background: var(--bg); border-radius: 4px;
+    overflow: hidden; display: flex; gap: 2px;
+  }
+  .progress-a { background: var(--accent); border-radius: 4px 0 0 4px; transition: width 0.5s ease; }
+  .progress-b { background: var(--accent2); border-radius: 0 4px 4px 0; transition: width 0.5s ease; }
+
+  .goal-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 10px;
+  }
+  .task-count { font-size: 12px; color: var(--ink3); }
+  .complete-badge {
+    background: #FFF7E6; color: var(--gold);
+    font-size: 11px; border-radius: 6px; padding: 3px 8px;
+    font-weight: 500;
+  }
+
+  /* ── 添加按钮 ── */
+  .add-btn {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: #fff;
+    border: none; border-radius: 30px;
+    padding: 14px 32px;
+    font-size: 15px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    cursor: pointer; box-shadow: 0 8px 24px rgba(28,25,22,0.2);
+    display: flex; align-items: center; gap: 8px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    z-index: 50;
+  }
+  .add-btn:hover { transform: translateX(-50%) translateY(-2px); box-shadow: 0 12px 32px rgba(28,25,22,0.25); }
+  .add-btn svg { width: 18px; height: 18px; }
+
+  /* ── 空状态 ── */
+  .empty {
+    text-align: center; padding: 48px 20px;
+    color: var(--ink3); font-size: 14px; line-height: 1.7;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+
+  /* ── 弹窗 ── */
+  .overlay {
+    position: fixed; inset: 0;
+    background: rgba(28,25,22,0.5); backdrop-filter: blur(4px);
+    z-index: 200; display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .overlay.show { opacity: 1; pointer-events: all; }
+
+  .sheet {
+    background: var(--card);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 40px;
+    width: 100%; max-width: 480px;
+    transform: translateY(20px); transition: transform 0.3s ease;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .overlay.show .sheet { transform: translateY(0); }
+
+  .sheet-handle {
+    width: 40px; height: 4px;
+    background: var(--border); border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .sheet-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 18px; font-weight: 600;
+    margin-bottom: 20px;
+  }
+
+  .form-label { font-size: 13px; color: var(--ink2); margin-bottom: 6px; font-weight: 500; }
+  .form-input, .form-select {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+    font-size: 15px; font-family: 'DM Sans', sans-serif;
+    background: var(--bg); color: var(--ink);
+    outline: none; transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--ink); }
+  .form-select { cursor: pointer; }
+
+  .type-picker {
+    display: flex; gap: 8px; margin-bottom: 16px;
+  }
+  .type-opt {
+    flex: 1; border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 10px 8px;
+    text-align: center; cursor: pointer; transition: all 0.2s;
+    font-size: 12px; color: var(--ink2);
+  }
+  .type-opt .type-emoji { font-size: 20px; display: block; margin-bottom: 4px; }
+  .type-opt.selected { border-color: var(--ink); background: var(--ink); color: #fff; }
+
+  .submit-btn {
+    width: 100%; background: var(--ink); color: #fff;
+    border: none; border-radius: 12px;
+    padding: 14px; font-size: 15px; font-weight: 500;
+    font-family: 'DM Sans', sans-serif; cursor: pointer;
+    transition: opacity 0.2s;
+    margin-top: 4px;
+  }
+  .submit-btn:hover { opacity: 0.85; }
+
+  /* ── 详情弹窗 ── */
+  .detail-sheet { padding: 24px 20px 40px; }
+  .detail-tag-row { margin-bottom: 12px; }
+  .detail-title {
+    font-family: 'Noto Serif SC', serif;
+    font-size: 20px; font-weight: 600; line-height: 1.4;
+    margin-bottom: 18px;
+  }
+  .detail-progress-section { margin-bottom: 20px; }
+  .detail-progress-title { font-size: 13px; color: var(--ink2); margin-bottom: 8px; font-weight: 500; }
+  .detail-track {
+    height: 10px; background: var(--bg); border-radius: 5px;
+    overflow: hidden; display: flex; gap: 2px; margin-bottom: 6px;
+  }
+  .detail-names { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink3); }
+
+  /* 子任务列表 */
+  .task-list { margin-bottom: 20px; }
+  .task-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid var(--border);
+    flex-shrink: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    font-size: 12px;
+  }
+  .task-check.checked-a { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .task-check.checked-b { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  .task-check.checked-both {
+    background: linear-gradient(135deg, var(--accent) 50%, var(--accent2) 50%);
+    border-color: transparent; color: #fff;
+  }
+  .task-text { flex: 1; font-size: 14px; color: var(--ink); line-height: 1.4; }
+  .task-text.done { text-decoration: line-through; color: var(--ink3); }
+
+  .who-row {
+    display: flex; gap: 8px; margin-bottom: 20px;
+  }
+  .who-btn {
+    flex: 1; border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 10px;
+    text-align: center; cursor: pointer; font-size: 13px;
+    transition: all 0.2s; color: var(--ink2);
+  }
+  .who-btn.active-a { background: #FEF0E8; border-color: var(--accent); color: var(--accent); font-weight: 500; }
+  .who-btn.active-b { background: #E8F3F0; border-color: var(--accent2); color: var(--accent2); font-weight: 500; }
+
+  /* 庆祝动画 */
+  .celebrate {
+    position: fixed; inset: 0; z-index: 999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(28,25,22,0.7); backdrop-filter: blur(8px);
+    opacity: 0; pointer-events: none; transition: opacity 0.3s;
+  }
+  .celebrate.show { opacity: 1; pointer-events: all; }
+  .celebrate-card {
+    background: var(--card); border-radius: 24px;
+    padding: 40px 32px; text-align: center;
+    max-width: 320px; width: 90%;
+    animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  }
+  @keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .celebrate-emoji { font-size: 48px; margin-bottom: 16px; animation: bounce 0.6s ease infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+  .celebrate-title { font-family: 'Noto Serif SC', serif; font-size: 20px; font-weight: 600; margin-bottom: 8px; }
+  .celebrate-sub { font-size: 14px; color: var(--ink2); margin-bottom: 24px; line-height: 1.6; }
+  .celebrate-coin { background: #FFF7E6; color: var(--gold); border-radius: 12px; padding: 10px 20px; font-size: 15px; font-weight: 500; margin-bottom: 20px; }
+  .celebrate-close { width: 100%; background: var(--ink); color: #fff; border: none; border-radius: 12px; padding: 13px; font-size: 15px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+  /* AI 拆解动效 */
+  .ai-loading {
+    background: var(--bg); border-radius: 10px;
+    padding: 14px; margin-bottom: 16px;
+    font-size: 13px; color: var(--ink2);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .ai-dots span {
+    display: inline-block; width: 6px; height: 6px;
+    background: var(--accent2); border-radius: 50%;
+    animation: dot 1.2s ease-in-out infinite;
+    margin: 0 2px;
+  }
+  .ai-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .ai-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dot { 0%,80%,100%{transform:scale(0.6);opacity:0.4} 40%{transform:scale(1);opacity:1} }
+
+  .confetti-container {
+    position: fixed; inset: 0; pointer-events: none; z-index: 998; overflow: hidden;
+  }
+  .confetti-piece {
+    position: absolute; width: 8px; height: 8px; border-radius: 2px;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    from { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    to   { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 导航 -->
+<nav class="nav">
+  <div class="nav-logo"><span>🏳️‍🌈</span>Boundless Love</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="nav-pair">
+      <div class="avatar av-a" id="navAvatarA">我</div>
+      <div class="avatar av-b" id="navAvatarB">她</div>
+    </div>
+    <div class="coin-badge" id="coinBadge">🪙 0</div>
+  </div>
+</nav>
+
+<!-- 主内容 -->
+<div class="main">
+  <div class="hello">
+    <div class="hello-title" id="helloTitle">你们好 ✨</div>
+    <div class="hello-sub" id="helloSub">今天想把哪个想法往前推一步？</div>
+  </div>
+
+  <!-- 里程碑 -->
+  <div class="milestone-card" id="milestoneCard">
+    <div class="milestone-label">下一个惊喜</div>
+    <div class="milestone-title">🗺️ 解锁 LGBT 友好国家</div>
+    <div class="milestone-bar-bg">
+      <div class="milestone-bar-fill" id="milestoneBar" style="width:0%"></div>
+    </div>
+    <div class="milestone-meta">
+      <span id="milestoneProgress">已完成 0 / 5 个目标</span>
+      <span id="milestonePct">0%</span>
+    </div>
+    <div class="milestone-reward">🏆 达成后解锁真实生活指南</div>
+  </div>
+
+  <!-- 筛选 -->
+  <div class="filter-row">
+    <button class="filter-btn active" onclick="setFilter('all', this)">全部</button>
+    <button class="filter-btn" onclick="setFilter('idea', this)">💡 我们的想法</button>
+    <button class="filter-btn" onclick="setFilter('future', this)">🌍 未来规划</button>
+    <button class="filter-btn" onclick="setFilter('grow', this)">🌱 共同成长</button>
+  </div>
+
+  <!-- 目标列表 -->
+  <div id="goalList"></div>
+</div>
+
+<!-- 添加按钮 -->
+<button class="add-btn" onclick="openAdd()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+  记录新想法
+</button>
+
+<!-- 添加弹窗 -->
+<div class="overlay" id="addOverlay" onclick="closeAdd(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">记录一个想法</div>
+
+    <div class="form-label">类型</div>
+    <div class="type-picker">
+      <div class="type-opt selected" onclick="selectType('idea',this)">
+        <span class="type-emoji">💡</span>我们的想法
+      </div>
+      <div class="type-opt" onclick="selectType('future',this)">
+        <span class="type-emoji">🌍</span>未来规划
+      </div>
+      <div class="type-opt" onclick="selectType('grow',this)">
+        <span class="type-emoji">🌱</span>共同成长
+      </div>
+    </div>
+
+    <div class="form-label">这个想法是什么？</div>
+    <input class="form-input" id="goalInput" placeholder="比如：我们想开一个小店 / 去泰国公证结婚" />
+
+    <div id="aiSection" style="display:none">
+      <div class="ai-loading" id="aiLoading" style="display:none">
+        <div class="ai-dots"><span></span><span></span><span></span></div>
+        <span>正在拆解步骤…</span>
+      </div>
+      <div id="aiStepPreview" style="display:none">
+        <div class="form-label">AI 建议的步骤（可编辑）</div>
+        <div id="aiStepList"></div>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitGoal()">✨ 记录下来</button>
+  </div>
+</div>
+
+<!-- 详情弹窗 -->
+<div class="overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="sheet detail-sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<!-- 庆祝弹窗 -->
+<div class="celebrate" id="celebrateOverlay" onclick="closeCelebrate()">
+  <div class="confetti-container" id="confettiContainer"></div>
+  <div class="celebrate-card" onclick="event.stopPropagation()">
+    <div class="celebrate-emoji">🎉</div>
+    <div class="celebrate-title">你们做到了！</div>
+    <div class="celebrate-sub" id="celebrateSub">一个目标又向前走了一步。</div>
+    <div class="celebrate-coin" id="celebrateCoin">🪙 +20 金币</div>
+    <button class="celebrate-close" onclick="closeCelebrate()">继续前进</button>
+  </div>
+</div>
+
+<script>
+// ── 状态 ──
+const state = {
+  currentUser: 'A', // A 或 B
+  nameA: '你',
+  nameB: '她',
+  coins: 0,
+  filter: 'all',
+  goals: [],
+  selectedType: 'idea',
+  aiSteps: [],
+};
+
+const TYPE_MAP = {
+  idea:   { label: '💡 我们的想法', cls: 'tag-idea' },
+  future: { label: '🌍 未来规划',   cls: 'tag-future' },
+  grow:   { label: '🌱 共同成长',   cls: 'tag-grow' },
+};
+
+// AI 步骤模板
+const AI_STEPS = {
+  idea: [
+    ['记录核心想法，写下关键词', false, false],
+    ['两人各自评估可行性', false, false],
+    ['确认启动时间和分工', false, false],
+    ['制定第一个具体行动', false, false],
+  ],
+  future: [
+    ['收集相关资料和信息', false, false],
+    ['评估所需时间和费用', false, false],
+    ['制定详细执行计划', false, false],
+    ['迈出第一步行动', false, false],
+    ['定期回顾进展', false, false],
+  ],
+  grow: [
+    ['确认具体目标和频率', false, false],
+    ['第一周打卡执行', false, false],
+    ['第二周继续坚持', false, false],
+    ['一个月总结复盘', false, false],
+  ],
+};
+
+// 示例数据
+state.goals = [
+  {
+    id: 1, type: 'future', title: '去泰国公证结婚',
+    tasks: [
+      ['确认护照有效期（两人）', true, true],
+      ['研究清迈/曼谷公证机构', true, false],
+      ['准备所需材料清单', false, false],
+      ['预订机票和酒店', false, false],
+      ['完成公证手续', false, false],
+    ]
+  },
+  {
+    id: 2, type: 'idea', title: '我们想做一个播客，聊女同伴侣的日常',
+    tasks: [
+      ['确认主题方向和受众', true, true],
+      ['测试录音设备', true, false],
+      ['录制第一集试播', false, false],
+      ['选择发布平台', false, false],
+    ]
+  },
+  {
+    id: 3, type: 'grow', title: '每周一起运动两次',
+    tasks: [
+      ['第1周打卡', true, true],
+      ['第2周打卡', true, true],
+      ['第3周打卡', false, false],
+      ['第4周打卡', false, false],
+    ]
+  },
+];
+
+// ── 渲染 ──
+function render() {
+  document.getElementById('coinBadge').textContent = '🪙 ' + state.coins;
+  document.getElementById('navAvatarA').textContent = state.nameA[0] || '我';
+  document.getElementById('navAvatarB').textContent = state.nameB[0] || '她';
+
+  const completed = state.goals.filter(g => isGoalDone(g)).length;
+  const pct = Math.min(100, Math.round(completed / 5 * 100));
+  document.getElementById('milestoneBar').style.width = pct + '%';
+  document.getElementById('milestoneProgress').textContent = `已完成 ${completed} / 5 个目标`;
+  document.getElementById('milestonePct').textContent = pct + '%';
+
+  const list = document.getElementById('goalList');
+  const filtered = state.goals.filter(g => state.filter === 'all' || g.type === state.filter);
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty"><div class="empty-icon">✨</div>还没有${state.filter === 'all' ? '' : TYPE_MAP[state.filter]?.label + '类的'}目标<br>点下方按钮，记录你们的第一个想法</div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  filtered.forEach((g, i) => {
+    const card = document.createElement('div');
+    card.className = 'goal-card';
+    card.style.animationDelay = (i * 0.05) + 's';
+    card.onclick = () => openDetail(g.id);
+
+    const doneA = g.tasks.filter(t => t[1]).length;
+    const doneB = g.tasks.filter(t => t[2]).length;
+    const total = g.tasks.length;
+    const pctA = total ? Math.round(doneA / total * 100) : 0;
+    const pctB = total ? Math.round(doneB / total * 100) : 0;
+    const done = isGoalDone(g);
+
+    card.innerHTML = `
+      <div class="goal-header">
+        <span class="goal-tag ${TYPE_MAP[g.type].cls}">${TYPE_MAP[g.type].label}</span>
+        ${done ? '<span class="complete-badge">✅ 已完成</span>' : ''}
+      </div>
+      <div class="goal-title">${g.title}</div>
+      <div class="progress-section">
+        <div class="progress-labels">
+          <span>${state.nameA} ${pctA}%</span>
+          <span>${state.nameB} ${pctB}%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-a" style="width:${pctA/2}%"></div>
+          <div class="progress-b" style="width:${pctB/2}%"></div>
+        </div>
+      </div>
+      <div class="goal-footer">
+        <span class="task-count">${doneA + doneB} / ${total * 2} 步骤已完成</span>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function isGoalDone(g) {
+  return g.tasks.length > 0 && g.tasks.every(t => t[1] && t[2]);
+}
+
+// ── 筛选 ──
+function setFilter(f, btn) {
+  state.filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+// ── 添加弹窗 ──
+function openAdd() {
+  state.selectedType = 'idea';
+  state.aiSteps = [];
+  document.getElementById('goalInput').value = '';
+  document.getElementById('aiSection').style.display = 'none';
+  document.getElementById('aiLoading').style.display = 'none';
+  document.getElementById('aiStepPreview').style.display = 'none';
+  document.querySelectorAll('.type-opt').forEach((o, i) => {
+    o.classList.toggle('selected', i === 0);
+  });
+  document.getElementById('addOverlay').classList.add('show');
+}
+
+function closeAdd(e) {
+  if (e.target === document.getElementById('addOverlay'))
+    document.getElementById('addOverlay').classList.remove('show');
+}
+
+function selectType(type, el) {
+  state.selectedType = type;
+  document.querySelectorAll('.type-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function submitGoal() {
+  const title = document.getElementById('goalInput').value.trim();
+  if (!title) { document.getElementById('goalInput').focus(); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '正在处理…';
+
+  // 显示 AI 拆解动效
+  document.getElementById('aiSection').style.display = 'block';
+  document.getElementById('aiLoading').style.display = 'flex';
+  document.getElementById('aiStepPreview').style.display = 'none';
+
+  await new Promise(r => setTimeout(r, 1400)); // 模拟 AI 延迟
+
+  // 生成步骤（模拟 AI）
+  const steps = AI_STEPS[state.selectedType].map(s => [...s]);
+  state.aiSteps = steps;
+
+  document.getElementById('aiLoading').style.display = 'none';
+  document.getElementById('aiStepPreview').style.display = 'block';
+
+  const stepListEl = document.getElementById('aiStepList');
+  stepListEl.innerHTML = '';
+  steps.forEach((s, i) => {
+    const inp = document.createElement('input');
+    inp.className = 'form-input';
+    inp.value = s[0];
+    inp.style.marginBottom = '8px';
+    inp.oninput = () => { state.aiSteps[i][0] = inp.value; };
+    stepListEl.appendChild(inp);
+  });
+
+  btn.disabled = false; btn.textContent = '✨ 就这样，创建目标';
+  btn.onclick = finalCreate;
+}
+
+function finalCreate() {
+  const title = document.getElementById('goalInput').value.trim();
+  if (!title) return;
+
+  const newGoal = {
+    id: Date.now(),
+    type: state.selectedType,
+    title,
+    tasks: state.aiSteps.length > 0
+      ? state.aiSteps.map(s => [s[0], false, false])
+      : [['第一步：开始行动', false, false]],
+  };
+
+  state.goals.unshift(newGoal);
+  document.getElementById('addOverlay').classList.remove('show');
+
+  // 重置按钮
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = '✨ 记录下来';
+  btn.onclick = submitGoal;
+
+  render();
+}
+
+// ── 详情弹窗 ──
+function openDetail(id) {
+  const g = state.goals.find(x => x.id === id);
+  if (!g) return;
+
+  const doneA = g.tasks.filter(t => t[1]).length;
+  const doneB = g.tasks.filter(t => t[2]).length;
+  const total = g.tasks.length;
+  const pctA = total ? Math.round(doneA / total * 100) : 0;
+  const pctB = total ? Math.round(doneB / total * 100) : 0;
+
+  const tasksHTML = g.tasks.map((t, i) => {
+    const bothDone = t[1] && t[2];
+    const myDone = state.currentUser === 'A' ? t[1] : t[2];
+    let checkCls = '';
+    if (t[1] && t[2]) checkCls = 'checked-both';
+    else if (t[1]) checkCls = 'checked-a';
+    else if (t[2]) checkCls = 'checked-b';
+
+    return `
+      <div class="task-item">
+        <div class="task-check ${checkCls}" onclick="toggleTask(${id}, ${i})">
+          ${(t[1] || t[2]) ? '✓' : ''}
+        </div>
+        <div class="task-text ${bothDone ? 'done' : ''}">${t[0]}</div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-tag-row">
+      <span class="goal-tag ${TYPE_MAP[g.type].cls}">${TYPE_MAP[g.type].label}</span>
+    </div>
+    <div class="detail-title">${g.title}</div>
+
+    <div class="detail-progress-section">
+      <div class="detail-progress-title">双人进度</div>
+      <div class="detail-track">
+        <div class="progress-a" style="width:${pctA/2}%"></div>
+        <div class="progress-b" style="width:${pctB/2}%"></div>
+      </div>
+      <div class="detail-names">
+        <span>${state.nameA} · ${pctA}%</span>
+        <span>${state.nameB} · ${pctB}%</span>
+      </div>
+    </div>
+
+    <div style="font-size:13px;color:var(--ink2);margin-bottom:8px;font-weight:500;">你现在是谁？</div>
+    <div class="who-row">
+      <div class="who-btn ${state.currentUser==='A'?'active-a':''}" onclick="switchUser('A')">
+        👤 ${state.nameA}（我）
+      </div>
+      <div class="who-btn ${state.currentUser==='B'?'active-b':''}" onclick="switchUser('B')">
+        💛 ${state.nameB}（她）
+      </div>
+    </div>
+
+    <div style="font-size:13px;color:var(--ink2);margin-bottom:8px;font-weight:500;">步骤清单</div>
+    <div class="task-list">${tasksHTML}</div>
+  `;
+
+  document.getElementById('detailOverlay').classList.add('show');
+}
+
+function switchUser(u) {
+  state.currentUser = u;
+  // 重新渲染详情（找当前打开的目标）
+  const overlay = document.getElementById('detailOverlay');
+  if (overlay.classList.contains('show')) {
+    // 找当前详情对应的 goal id
+    const title = document.querySelector('.detail-title')?.textContent;
+    const g = state.goals.find(x => x.title === title);
+    if (g) openDetail(g.id);
+  }
+}
+
+function toggleTask(goalId, taskIdx) {
+  const g = state.goals.find(x => x.id === goalId);
+  if (!g) return;
+  const task = g.tasks[taskIdx];
+
+  const wasA = task[1], wasB = task[2];
+  if (state.currentUser === 'A') task[1] = !task[1];
+  else task[2] = !task[2];
+
+  // 检查是否整个目标完成
+  const nowDone = isGoalDone(g);
+  if (nowDone && !(wasA && wasB && g.tasks.every(t => t[1] && t[2]))) {
+    // 新完成
+    state.coins += 20;
+    setTimeout(() => showCelebrate(g.title), 300);
+  }
+
+  openDetail(goalId);
+  render();
+}
+
+function closeDetail(e) {
+  if (e.target === document.getElementById('detailOverlay'))
+    document.getElementById('detailOverlay').classList.remove('show');
+}
+
+// ── 庆祝 ──
+function showCelebrate(title) {
+  document.getElementById('celebrateSub').textContent = `「${title.slice(0,18)}」两人全部完成！`;
+  document.getElementById('celebrateOverlay').classList.add('show');
+  spawnConfetti();
+}
+
+function closeCelebrate() {
+  document.getElementById('celebrateOverlay').classList.remove('show');
+  document.getElementById('confettiContainer').innerHTML = '';
+  render();
+}
+
+function spawnConfetti() {
+  const colors = ['#C9572A','#4A7C6F','#7B5EA7','#D4A84B','#E8A5C2'];
+  const container = document.getElementById('confettiContainer');
+  container.innerHTML = '';
+  for (let i = 0; i < 60; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      left: ${Math.random()*100}%;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      width: ${4+Math.random()*8}px;
+      height: ${4+Math.random()*8}px;
+      animation-duration: ${1.5+Math.random()*2}s;
+      animation-delay: ${Math.random()*0.5}s;
+    `;
+    container.appendChild(el);
+  }
+}
+
+// 初始化
+render();
+</script>
+</body>
+</html>
