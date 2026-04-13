@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Ocean · 双人目标规划</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=Noto+Sans+SC:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --fog-blue: #B8CDD8;
+  --fog-blue-light: #D6E8F0;
+  --fog-blue-deep: #7BA3B8;
+  --sand: #F5F0E8;
+  --sand-warm: #EDE6D6;
+  --coral: #E8856A;
+  --coral-light: #F5C4B3;
+  --coral-dark: #C45A3E;
+  --gold: #D4A84B;
+  --gold-light: #F0D898;
+  --teal-deep: #2C5F6E;
+  --teal-mid: #3D7A8A;
+  --teal-light: #5E9BAA;
+  --ink: #1A2E35;
+  --ink2: #4A6572;
+  --ink3: #7A9BAA;
+  --white: #FFFFFF;
+  --card: #FDFAF5;
+  --border: rgba(44,95,110,0.12);
+  --shadow-soft: 0 4px 20px rgba(44,95,110,0.10);
+  --shadow-card: 0 2px 12px rgba(44,95,110,0.08);
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Noto Sans SC', 'DM Sans', sans-serif;
+  background: var(--sand);
+  color: var(--ink);
+  min-height: 100vh;
+  overflow-x: hidden;
+  max-width: 390px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; flex-direction: column; }
+.screen.active { display: flex; }
+
+/* ── NAV BAR ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 390px;
+  background: rgba(253,250,245,0.95);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-around;
+  padding: 8px 0 20px;
+  z-index: 100;
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; padding: 4px 16px;
+  transition: all 0.2s;
+}
+.nav-icon {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+.nav-label {
+  font-size: 10px; color: var(--ink3);
+  font-family: 'Noto Sans SC', sans-serif;
+  transition: color 0.2s;
+}
+.nav-item.active .nav-icon { background: var(--teal-deep); font-size: 18px; }
+.nav-item.active .nav-label { color: var(--teal-deep); font-weight: 500; }
+
+/* ── HOME SCREEN ── */
+#homeScreen { background: transparent; }
+
+.ocean-scene {
+  position: relative;
+  width: 100%;
+  height: 420px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sky {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, #A8C8DC 0%, #C8DFE8 45%, #D8ECF2 100%);
+}
+
+/* Clouds */
+.cloud {
+  position: absolute;
+  border-radius: 50px;
+  opacity: 0.85;
+}
+.cloud-1 {
+  background: rgba(255,255,255,0.9);
+  width: 90px; height: 28px;
+  top: 48px; left: 30px;
+  animation: drift 18s ease-in-out infinite;
+}
+.cloud-1::before {
+  content: ''; position: absolute;
+  background: rgba(255,255,255,0.9);
+  width: 50px; height: 36px;
+  border-radius: 50%;
+  top: -16px; left: 16px;
+}
+.cloud-2 {
+  background: rgba(255,255,255,0.75);
+  width: 60px; height: 20px;
+  top: 70px; right: 50px;
+  animation: drift 24s ease-in-out infinite reverse;
+}
+.cloud-2::before {
+  content: ''; position: absolute;
+  background: rgba(255,255,255,0.75);
+  width: 34px; height: 26px;
+  border-radius: 50%;
+  top: -12px; left: 10px;
+}
+.cloud-3 {
+  background: rgba(255,255,255,0.6);
+  width: 44px; height: 14px;
+  top: 30px; right: 90px;
+  animation: drift 30s ease-in-out infinite;
+}
+@keyframes drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(14px); }
+}
+
+/* Seagulls */
+.seagull {
+  position: absolute;
+  opacity: 0.5;
+  animation: fly 8s ease-in-out infinite;
+}
+.seagull svg { width: 18px; height: 10px; }
+.sg1 { top: 90px; left: 80px; animation-delay: 0s; }
+.sg2 { top: 78px; left: 110px; animation-delay: 0.3s; }
+.sg3 { top: 60px; right: 60px; animation-delay: 1s; }
+@keyframes fly {
+  0%, 100% { transform: translateY(0) scaleX(1); }
+  50% { transform: translateY(-6px) scaleX(1); }
+}
+
+/* Sea */
+.sea {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 240px;
+  overflow: hidden;
+}
+.sea-layer-1 {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, #5B9EB8 0%, #3D7E9A 40%, #2C6880 100%);
+}
+.sea-layer-2 {
+  position: absolute; top: 0; left: -20px; right: -20px; height: 40px;
+  background: #6AAEC8;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  animation: wave1 4s ease-in-out infinite;
+}
+.sea-layer-3 {
+  position: absolute; top: 8px; left: -30px; right: -30px; height: 32px;
+  background: #78B8CE;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  animation: wave1 5s ease-in-out infinite reverse;
+  opacity: 0.6;
+}
+@keyframes wave1 {
+  0%, 100% { transform: translateX(0) scaleY(1); }
+  50% { transform: translateX(10px) scaleY(1.05); }
+}
+
+/* Shimmer on water */
+.sea-shimmer {
+  position: absolute;
+  bottom: 60px; left: 0; right: 0; height: 80px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0px, transparent 20px,
+    rgba(255,255,255,0.06) 20px, rgba(255,255,255,0.06) 40px
+  );
+  animation: shimmer 3s linear infinite;
+}
+@keyframes shimmer { from { transform: translateX(0); } to { transform: translateX(40px); } }
+
+/* Ship */
+.ship-container {
+  position: absolute;
+  bottom: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: bob 3s ease-in-out infinite;
+  z-index: 10;
+}
+@keyframes bob {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(-0.5deg); }
+  50% { transform: translateX(-50%) translateY(-8px) rotate(0.5deg); }
+}
+.ship-svg { width: 160px; height: auto; }
+
+/* Characters on ship */
+.chars-on-ship {
+  position: absolute;
+  bottom: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 6px;
+  z-index: 11;
+  animation: bob 3s ease-in-out infinite;
+}
+.char {
+  width: 28px; height: 44px;
+  display: flex; flex-direction: column; align-items: center;
+  position: relative;
+}
+.char-head {
+  width: 18px; height: 18px; border-radius: 50%;
+  margin-bottom: 1px;
+  position: relative;
+  z-index: 2;
+}
+.char-hair {
+  position: absolute; top: -3px; left: 1px; right: 1px; height: 10px;
+  border-radius: 9px 9px 0 0;
+}
+.char-body {
+  width: 20px; height: 22px; border-radius: 8px 8px 4px 4px;
+  position: relative;
+}
+.char-a .char-head { background: #F5D5B8; }
+.char-a .char-hair { background: #8B5E3C; }
+.char-a .char-body { background: #E8856A; }
+.char-b .char-head { background: #EBC89A; }
+.char-b .char-hair { background: #2C1A0E; }
+.char-b .char-body { background: #5E9BAA; }
+
+/* Wave foam */
+.foam {
+  position: absolute;
+  height: 3px; border-radius: 3px;
+  background: rgba(255,255,255,0.5);
+  animation: foam-drift linear infinite;
+}
+.foam-1 { width: 30px; bottom: 80px; left: 20px; animation-duration: 6s; animation-delay: 0s; }
+.foam-2 { width: 18px; bottom: 100px; right: 40px; animation-duration: 8s; animation-delay: 1s; }
+.foam-3 { width: 24px; bottom: 65px; left: 60%; animation-duration: 7s; animation-delay: 2s; }
+@keyframes foam-drift {
+  0% { transform: translateX(0); opacity: 0.5; }
+  50% { opacity: 0.8; }
+  100% { transform: translateX(30px); opacity: 0; }
+}
+
+/* Milestone badge on scene */
+.milestone-chip {
+  position: absolute;
+  top: 16px; right: 16px;
+  background: rgba(253,250,245,0.92);
+  backdrop-filter: blur(8px);
+  border-radius: var(--r-lg);
+  padding: 8px 12px;
+  display: flex; flex-direction: column; gap: 4px;
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: var(--shadow-soft);
+  max-width: 140px;
+}
+.milestone-label-sm { font-size: 10px; color: var(--ink3); letter-spacing: 0.04em; }
+.milestone-name { font-size: 12px; color: var(--teal-deep); font-weight: 500; font-family: 'Noto Serif SC', serif; line-height: 1.3; }
+.milestone-mini-bar { height: 3px; background: var(--border); border-radius: 2px; }
+.milestone-mini-fill { height: 3px; background: var(--gold); border-radius: 2px; transition: width 0.6s ease; }
+
+/* Pair chip on scene */
+.pair-chip {
+  position: absolute;
+  top: 16px; left: 16px;
+  background: rgba(253,250,245,0.92);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  padding: 6px 12px 6px 8px;
+  display: flex; align-items: center; gap: 6px;
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: var(--shadow-soft);
+}
+.pair-avatars { display: flex; }
+.pa {
+  width: 22px; height: 22px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500;
+  border: 2px solid rgba(253,250,245,0.9);
+}
+.pa-a { background: var(--coral-light); color: var(--coral-dark); }
+.pa-b { background: var(--fog-blue); color: var(--teal-deep); margin-left: -6px; }
+.pair-name { font-size: 11px; color: var(--teal-deep); font-weight: 500; }
+
+/* Pull-down panel */
+.pull-panel {
+  flex: 1;
+  background: var(--sand);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  margin-top: -28px;
+  position: relative;
+  z-index: 5;
+  padding: 16px 16px 100px;
+}
+.pull-handle {
+  width: 36px; height: 4px;
+  background: var(--ink3); border-radius: 2px; opacity: 0.3;
+  margin: 0 auto 18px;
+}
+.section-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 15px; font-weight: 600;
+  color: var(--teal-deep);
+  margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+.section-title-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--coral);
+}
+
+/* Today cards */
+.today-card {
+  background: var(--card);
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  animation: slideUp 0.3s ease both;
+}
+.today-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.today-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+.today-plan-name { font-size: 12px; color: var(--ink3); margin-bottom: 2px; }
+.today-stage-name {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 15px; color: var(--ink); font-weight: 600; line-height: 1.3;
+}
+.today-ddl {
+  font-size: 11px; color: var(--coral);
+  background: rgba(232,133,106,0.1); border-radius: 6px;
+  padding: 3px 8px; white-space: nowrap;
+}
+
+.progress-row { display: flex; align-items: center; gap: 10px; }
+.progress-bar-wrap { flex: 1; height: 6px; background: var(--sand-warm); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 6px; background: linear-gradient(90deg, var(--teal-mid), var(--teal-light)); border-radius: 3px; transition: width 0.5s ease; }
+.progress-pct { font-size: 12px; font-weight: 500; color: var(--teal-deep); min-width: 32px; text-align: right; }
+
+.today-avatars { display: flex; gap: 4px; margin-top: 10px; }
+.ta {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--ink2);
+  background: var(--sand-warm); border-radius: 6px; padding: 3px 8px;
+}
+.ta-dot { width: 7px; height: 7px; border-radius: 50%; }
+.dot-a { background: var(--coral); }
+.dot-b { background: var(--teal-mid); }
+
+/* ── WISH POOL ── */
+#wishScreen {
+  background: var(--sand);
+  padding-bottom: 100px;
+}
+.screen-header {
+  padding: 56px 20px 20px;
+  background: linear-gradient(180deg, var(--fog-blue-light) 0%, var(--sand) 100%);
+}
+.screen-header-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 22px; font-weight: 600; color: var(--teal-deep);
+  margin-bottom: 4px;
+}
+.screen-header-sub { font-size: 13px; color: var(--ink3); }
+
+.wish-card {
+  background: var(--card);
+  border-radius: var(--r-md);
+  padding: 16px;
+  margin: 0 16px 10px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  transition: transform 0.15s;
+  animation: slideUp 0.3s ease both;
+}
+.wish-card:hover { transform: translateY(-2px); }
+.wish-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
+.wish-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 15px; color: var(--ink); font-weight: 600; line-height: 1.4; flex: 1;
+}
+.wish-by {
+  font-size: 11px; color: var(--ink3); display: flex; align-items: center; gap: 4px; margin-top: 6px;
+}
+.wish-steps-preview {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.wish-step-item {
+  font-size: 12px; color: var(--ink2);
+  padding: 3px 0;
+  display: flex; align-items: center; gap: 6px;
+}
+.wish-step-item::before {
+  content: '';
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--teal-light); flex-shrink: 0;
+}
+.wish-convert-btn {
+  margin-top: 12px;
+  width: 100%;
+  background: var(--teal-deep); color: #fff;
+  border: none; border-radius: var(--r-sm);
+  padding: 10px 16px;
+  font-size: 13px; font-family: 'Noto Sans SC', sans-serif; font-weight: 500;
+  cursor: pointer; transition: opacity 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.wish-convert-btn:hover { opacity: 0.85; }
+
+.add-fab {
+  position: fixed; bottom: 84px; right: 20px;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: var(--coral); color: #fff;
+  border: none; box-shadow: 0 6px 20px rgba(232,133,106,0.4);
+  font-size: 24px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 50; transition: transform 0.15s, box-shadow 0.15s;
+}
+.add-fab:hover { transform: scale(1.05); box-shadow: 0 8px 28px rgba(232,133,106,0.5); }
+
+/* ── PLAN LIST ── */
+#planScreen {
+  background: var(--sand);
+  padding-bottom: 100px;
+}
+.plan-card {
+  background: var(--card);
+  border-radius: var(--r-md);
+  margin: 0 16px 12px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s;
+  animation: slideUp 0.3s ease both;
+}
+.plan-card:hover { transform: translateY(-2px); }
+.plan-card-top {
+  padding: 16px 16px 12px;
+}
+.plan-type-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; border-radius: 6px; padding: 3px 8px;
+  font-weight: 500; margin-bottom: 8px;
+}
+.badge-future { background: rgba(91,158,184,0.15); color: var(--teal-deep); }
+.badge-grow { background: rgba(212,168,75,0.15); color: #8B6820; }
+.plan-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 16px; font-weight: 600; color: var(--ink); line-height: 1.4;
+  margin-bottom: 12px;
+}
+.stage-list { padding: 0 16px 14px; border-top: 1px solid var(--border); }
+.stage-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(44,95,110,0.06);
+}
+.stage-item:last-child { border-bottom: none; }
+.stage-status-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--border);
+}
+.stage-status-dot.done { background: var(--teal-mid); border-color: var(--teal-mid); }
+.stage-status-dot.active { background: var(--coral); border-color: var(--coral); animation: pulse-dot 2s ease-in-out infinite; }
+.stage-status-dot.upcoming { background: transparent; }
+@keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 0 rgba(232,133,106,0.4); } 50% { box-shadow: 0 0 0 5px rgba(232,133,106,0); } }
+.stage-info { flex: 1; }
+.stage-name { font-size: 13px; color: var(--ink); font-weight: 500; }
+.stage-ddl { font-size: 11px; color: var(--ink3); margin-top: 1px; }
+.stage-prog { font-size: 11px; color: var(--teal-mid); font-weight: 500; }
+
+/* ── CHECK-IN SCREEN ── */
+#checkinScreen {
+  background: var(--sand);
+  display: none; flex-direction: column;
+}
+.checkin-header {
+  padding: 52px 20px 16px;
+  background: linear-gradient(180deg, var(--teal-deep) 0%, var(--teal-mid) 100%);
+  color: #fff;
+}
+.back-btn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: rgba(255,255,255,0.8);
+  cursor: pointer; margin-bottom: 14px;
+  background: none; border: none; padding: 0;
+}
+.checkin-plan-name { font-size: 12px; opacity: 0.7; margin-bottom: 4px; }
+.checkin-stage-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 20px; font-weight: 600; line-height: 1.3;
+  margin-bottom: 16px;
+}
+.shared-progress-section { margin-bottom: 6px; }
+.prog-labels { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.8; margin-bottom: 6px; }
+.prog-track {
+  height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px;
+  position: relative; cursor: pointer;
+}
+.prog-fill {
+  height: 8px; background: rgba(255,255,255,0.9); border-radius: 4px;
+  transition: width 0.3s ease;
+}
+.prog-thumb {
+  position: absolute; top: -5px; height: 18px; width: 18px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--teal-mid);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  transform: translateX(-50%);
+  cursor: grab; transition: left 0.3s ease;
+}
+.prog-drag-hint { font-size: 11px; opacity: 0.6; margin-top: 6px; text-align: center; }
+
+.chat-area {
+  flex: 1; overflow-y: auto;
+  padding: 16px 16px 80px;
+  background: var(--sand);
+}
+.chat-date-divider {
+  text-align: center; font-size: 11px; color: var(--ink3);
+  margin: 12px 0; position: relative;
+}
+.chat-date-divider::before, .chat-date-divider::after {
+  content: '';
+  position: absolute; top: 50%;
+  width: 30%; height: 1px; background: var(--border);
+}
+.chat-date-divider::before { left: 10%; }
+.chat-date-divider::after { right: 10%; }
+
+.chat-bubble-wrap { display: flex; margin-bottom: 10px; }
+.chat-bubble-wrap.me { flex-direction: row-reverse; }
+
+.chat-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 500; flex-shrink: 0;
+  margin-top: 4px;
+}
+.chat-avatar.av-a { background: var(--coral-light); color: var(--coral-dark); margin-right: 8px; }
+.chat-avatar.av-b { background: var(--fog-blue); color: var(--teal-deep); margin-left: 8px; }
+
+.chat-bubble {
+  max-width: 68%;
+  background: var(--card); border-radius: 14px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border);
+}
+.chat-bubble-wrap.me .chat-bubble {
+  background: var(--teal-deep); color: #fff; border-color: transparent;
+}
+.bubble-name { font-size: 11px; font-weight: 500; color: var(--teal-mid); margin-bottom: 3px; }
+.chat-bubble-wrap.me .bubble-name { color: rgba(255,255,255,0.7); }
+.bubble-text { font-size: 13px; line-height: 1.5; }
+.bubble-time { font-size: 10px; color: var(--ink3); margin-top: 4px; text-align: right; }
+.chat-bubble-wrap.me .bubble-time { color: rgba(255,255,255,0.55); }
+.bubble-prog-update {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--teal-light);
+  margin-top: 4px;
+}
+.chat-bubble-wrap.me .bubble-prog-update { color: rgba(255,255,255,0.7); }
+
+.chat-input-bar {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 390px;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding: 10px 12px 28px;
+  display: flex; align-items: flex-end; gap: 8px;
+  z-index: 100;
+}
+.who-toggle {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--sand-warm); border-radius: 8px; padding: 4px 8px;
+  font-size: 11px; color: var(--ink2); cursor: pointer; flex-shrink: 0;
+  border: 1px solid var(--border);
+}
+.chat-input {
+  flex: 1; border: 1px solid var(--border);
+  border-radius: 20px; padding: 9px 14px;
+  font-size: 14px; font-family: 'Noto Sans SC', sans-serif;
+  background: var(--sand);
+  color: var(--ink); outline: none;
+  transition: border-color 0.2s; resize: none; line-height: 1.4;
+}
+.chat-input:focus { border-color: var(--teal-mid); }
+.send-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--teal-deep); color: #fff; border: none;
+  cursor: pointer; font-size: 16px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.15s;
+}
+.send-btn:hover { transform: scale(1.05); }
+
+/* Note indicator */
+.note-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(212,168,75,0.15); color: #8B6820;
+  border-radius: 8px; padding: 4px 10px; font-size: 12px;
+  margin-bottom: 10px; cursor: pointer;
+  border: 1px solid rgba(212,168,75,0.3);
+}
+
+/* ── US SCREEN ── */
+#usScreen {
+  background: var(--sand);
+  padding-bottom: 100px;
+}
+.us-milestone-card {
+  margin: 0 16px 12px;
+  background: var(--teal-deep);
+  border-radius: var(--r-md);
+  padding: 20px;
+  color: #fff;
+  position: relative; overflow: hidden;
+}
+.us-milestone-card::after {
+  content: ''; position: absolute;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  bottom: -40px; right: -30px;
+}
+.us-ms-label { font-size: 11px; opacity: 0.6; letter-spacing: 0.06em; margin-bottom: 6px; }
+.us-ms-title { font-family: 'Noto Serif SC', serif; font-size: 17px; font-weight: 600; margin-bottom: 14px; line-height: 1.3; }
+.us-ms-bar-bg { height: 6px; background: rgba(255,255,255,0.15); border-radius: 3px; margin-bottom: 6px; }
+.us-ms-bar-fill { height: 6px; background: var(--gold); border-radius: 3px; }
+.us-ms-meta { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.65; }
+
+.note-list-card {
+  margin: 0 16px 10px;
+  background: var(--card);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-card);
+}
+.note-list-title { font-size: 13px; color: var(--ink3); margin-bottom: 10px; font-weight: 500; }
+.note-item {
+  display: flex; gap: 10px; padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.note-item:last-child { border-bottom: none; }
+.note-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex-shrink: 0; margin-top: 4px; }
+.note-content { flex: 1; }
+.note-from { font-size: 11px; color: var(--ink3); margin-bottom: 2px; }
+.note-text { font-size: 13px; color: var(--ink); line-height: 1.5; }
+.note-task-ref { font-size: 11px; color: var(--teal-mid); margin-top: 3px; }
+
+/* ── OVERLAY SHEET ── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,46,53,0.45);
+  backdrop-filter: blur(6px);
+  z-index: 200;
+  display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s;
+}
+.overlay.show { opacity: 1; pointer-events: all; }
+.sheet {
+  background: var(--card);
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: 20px 20px 40px;
+  width: 100%; max-width: 390px;
+  transform: translateY(24px);
+  transition: transform 0.3s cubic-bezier(0.34,1.1,0.64,1);
+  max-height: 88vh; overflow-y: auto;
+}
+.overlay.show .sheet { transform: translateY(0); }
+.sheet-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+.sheet-title { font-family: 'Noto Serif SC', serif; font-size: 18px; font-weight: 600; color: var(--teal-deep); margin-bottom: 18px; }
+
+.form-label { font-size: 12px; color: var(--ink3); font-weight: 500; margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase; }
+.form-input, .form-textarea {
+  width: 100%; border: 1.5px solid var(--border);
+  border-radius: var(--r-sm); padding: 11px 14px;
+  font-size: 14px; font-family: 'Noto Sans SC', sans-serif;
+  background: var(--sand); color: var(--ink);
+  outline: none; transition: border-color 0.2s;
+  margin-bottom: 14px;
+}
+.form-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.form-input:focus, .form-textarea:focus { border-color: var(--teal-mid); }
+
+.type-row { display: flex; gap: 8px; margin-bottom: 14px; }
+.type-chip {
+  flex: 1; border: 1.5px solid var(--border);
+  border-radius: var(--r-sm); padding: 10px 8px;
+  text-align: center; cursor: pointer; transition: all 0.2s;
+  font-size: 12px; color: var(--ink2); background: var(--sand);
+}
+.type-chip .type-emoji { font-size: 18px; display: block; margin-bottom: 3px; }
+.type-chip.selected { border-color: var(--teal-deep); background: var(--teal-deep); color: #fff; }
+
+.ai-preview {
+  background: var(--sand-warm); border-radius: var(--r-sm);
+  padding: 12px 14px; margin-bottom: 14px;
+}
+.ai-preview-label { font-size: 11px; color: var(--teal-mid); font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+.ai-step-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; color: var(--ink);
+}
+.ai-step-pill:last-child { border-bottom: none; }
+.ai-step-num { width: 20px; height: 20px; border-radius: 50%; background: var(--teal-deep); color: #fff; font-size: 10px; font-weight: 500; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+.submit-btn {
+  width: 100%; background: var(--teal-deep); color: #fff;
+  border: none; border-radius: var(--r-sm); padding: 14px;
+  font-size: 15px; font-weight: 500; font-family: 'Noto Sans SC', sans-serif;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.submit-btn:hover { opacity: 0.88; }
+.submit-btn.coral { background: var(--coral); }
+
+/* AI dots loading */
+.ai-loading { display: flex; align-items: center; gap: 8px; padding: 12px 0; font-size: 13px; color: var(--ink3); }
+.dot-spin span { display: inline-block; width: 6px; height: 6px; background: var(--teal-mid); border-radius: 50%; margin: 0 2px; animation: dotpulse 1.2s ease-in-out infinite; }
+.dot-spin span:nth-child(2) { animation-delay: 0.2s; }
+.dot-spin span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes dotpulse { 0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1} }
+
+/* Celebrate */
+.celebrate-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(26,46,53,0.6); backdrop-filter: blur(8px);
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.celebrate-overlay.show { opacity: 1; pointer-events: all; }
+.celebrate-card {
+  background: var(--card); border-radius: var(--r-xl);
+  padding: 36px 28px; text-align: center;
+  max-width: 300px; width: 90%;
+  animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes popIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.cel-emoji { font-size: 44px; margin-bottom: 14px; display: block; animation: bounce 0.6s ease infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-8px); } }
+.cel-title { font-family: 'Noto Serif SC', serif; font-size: 19px; font-weight: 600; color: var(--teal-deep); margin-bottom: 6px; }
+.cel-sub { font-size: 13px; color: var(--ink2); margin-bottom: 20px; line-height: 1.6; }
+.cel-close { width: 100%; background: var(--teal-deep); color: #fff; border: none; border-radius: var(--r-sm); padding: 13px; font-size: 14px; cursor: pointer; font-family: 'Noto Sans SC', sans-serif; }
+
+.confetti-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 998; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="homeScreen" class="screen active">
+  <div class="ocean-scene">
+    <div class="sky"></div>
+    <!-- Clouds -->
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+    <div class="cloud cloud-3"></div>
+    <!-- Seagulls -->
+    <div class="seagull sg1">
+      <svg viewBox="0 0 18 10" fill="none"><path d="M1 5 Q4.5 1 9 5 Q13.5 1 17 5" stroke="#2C5F6E" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+    </div>
+    <div class="seagull sg2">
+      <svg viewBox="0 0 18 10" fill="none"><path d="M1 5 Q4.5 1 9 5 Q13.5 1 17 5" stroke="#2C5F6E" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+    </div>
+    <div class="seagull sg3">
+      <svg viewBox="0 0 14 8" fill="none"><path d="M1 4 Q3.5 1 7 4 Q10.5 1 13 4" stroke="#2C5F6E" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
+    </div>
+    <!-- Sea -->
+    <div class="sea">
+      <div class="sea-layer-1"></div>
+      <div class="sea-layer-2"></div>
+      <div class="sea-layer-3"></div>
+      <div class="sea-shimmer"></div>
+      <div class="foam foam-1"></div>
+      <div class="foam foam-2"></div>
+      <div class="foam foam-3"></div>
+    </div>
+    <!-- Ship SVG -->
+    <div class="ship-container">
+      <svg class="ship-svg" viewBox="0 0 160 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Hull -->
+        <path d="M20 52 L140 52 L128 74 Q80 82 32 74 Z" fill="#8B4513"/>
+        <path d="M20 52 L140 52 L132 60 L28 60 Z" fill="#A0522D"/>
+        <!-- Deck -->
+        <rect x="28" y="44" width="104" height="10" rx="4" fill="#C8A882"/>
+        <!-- Mast -->
+        <line x1="80" y1="8" x2="80" y2="44" stroke="#6B4226" stroke-width="3" stroke-linecap="round"/>
+        <!-- Sail -->
+        <path d="M80 10 Q100 22 92 40 L80 40 Z" fill="rgba(253,250,245,0.92)" stroke="rgba(200,180,150,0.5)" stroke-width="0.8"/>
+        <path d="M80 14 Q60 24 68 40 L80 40 Z" fill="rgba(245,240,232,0.85)" stroke="rgba(200,180,150,0.5)" stroke-width="0.8"/>
+        <!-- Flag -->
+        <path d="M80 8 L92 12 L80 16 Z" fill="#E8856A"/>
+        <!-- Rope lines -->
+        <line x1="80" y1="10" x2="28" y2="44" stroke="rgba(100,70,40,0.4)" stroke-width="0.8"/>
+        <line x1="80" y1="10" x2="132" y2="44" stroke="rgba(100,70,40,0.4)" stroke-width="0.8"/>
+        <!-- Windows -->
+        <circle cx="48" cy="58" r="3.5" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8"/>
+        <circle cx="80" cy="58" r="3.5" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8"/>
+        <circle cx="112" cy="58" r="3.5" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.3)" stroke-width="0.8"/>
+      </svg>
+    </div>
+    <!-- Characters -->
+    <div class="chars-on-ship">
+      <div class="char char-a">
+        <div class="char-head">
+          <div class="char-hair"></div>
+        </div>
+        <div class="char-body"></div>
+      </div>
+      <div class="char char-b">
+        <div class="char-head">
+          <div class="char-hair"></div>
+        </div>
+        <div class="char-body"></div>
+      </div>
+    </div>
+    <!-- Pair chip -->
+    <div class="pair-chip">
+      <div class="pair-avatars">
+        <div class="pa pa-a">小</div>
+        <div class="pa pa-b">云</div>
+      </div>
+      <span class="pair-name">我们的船</span>
+    </div>
+    <!-- Milestone chip -->
+    <div class="milestone-chip">
+      <div class="milestone-label-sm">下一站</div>
+      <div class="milestone-name">解锁 LGBT 友好城市</div>
+      <div class="milestone-mini-bar">
+        <div class="milestone-mini-fill" style="width:60%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pull panel -->
+  <div class="pull-panel">
+    <div class="pull-handle"></div>
+    <div class="section-title"><span class="section-title-dot"></span>今日打卡</div>
+    <div id="todayCards"></div>
+  </div>
+</div>
+
+<!-- WISH POOL -->
+<div id="wishScreen" class="screen">
+  <div class="screen-header">
+    <div class="screen-header-title">🪄 心愿池</div>
+    <div class="screen-header-sub">两人共同许下的愿望，等待起航</div>
+  </div>
+  <div id="wishList" style="padding-top:4px;"></div>
+  <button class="add-fab" onclick="openWishAdd()">＋</button>
+</div>
+
+<!-- PLAN LIST -->
+<div id="planScreen" class="screen">
+  <div class="screen-header">
+    <div class="screen-header-title">🗺 计划清单</div>
+    <div class="screen-header-sub">正在航行中的计划</div>
+  </div>
+  <div id="planList" style="padding-top:4px;"></div>
+</div>
+
+<!-- CHECK-IN -->
+<div id="checkinScreen" class="screen">
+  <div class="checkin-header">
+    <button class="back-btn" onclick="backFromCheckin()">← 返回</button>
+    <div class="checkin-plan-name" id="ci-plan-name"></div>
+    <div class="checkin-stage-title" id="ci-stage-title"></div>
+    <div class="shared-progress-section">
+      <div class="prog-labels">
+        <span>共同进度</span>
+        <span id="ci-pct">0%</span>
+      </div>
+      <div class="prog-track" id="progTrack">
+        <div class="prog-fill" id="progFill" style="width:0%"></div>
+        <div class="prog-thumb" id="progThumb" style="left:0%"></div>
+      </div>
+      <div class="prog-drag-hint">拖动调整进度</div>
+    </div>
+  </div>
+  <div class="chat-area" id="chatArea"></div>
+  <div class="chat-input-bar">
+    <div class="who-toggle" onclick="toggleWho()">
+      <div class="ta-dot" id="whoColorDot" style="background:var(--coral)"></div>
+      <span id="whoLabel">小满</span>
+    </div>
+    <input class="chat-input" id="chatInput" placeholder="今天为这个目标做了什么…" />
+    <button class="send-btn" onclick="sendCheckin()">↑</button>
+  </div>
+</div>
+
+<!-- US -->
+<div id="usScreen" class="screen">
+  <div class="screen-header">
+    <div class="screen-header-title">💛 我们</div>
+    <div class="screen-header-sub">一起走过的每一步</div>
+  </div>
+  <div class="us-milestone-card">
+    <div class="us-ms-label">当前里程碑</div>
+    <div class="us-ms-title">⛵ 解锁 LGBT 友好城市指南</div>
+    <div class="us-ms-bar-bg">
+      <div class="us-ms-bar-fill" id="usMsBar" style="width:60%"></div>
+    </div>
+    <div class="us-ms-meta">
+      <span>已完成 3 / 5 个阶段</span>
+      <span>60%</span>
+    </div>
+  </div>
+  <div style="margin: 0 16px 12px;">
+    <div class="section-title"><span class="section-title-dot"></span>小纸条</div>
+  </div>
+  <div class="note-list-card">
+    <div class="note-list-title">来自伴侣的悄悄话</div>
+    <div class="note-item">
+      <div class="note-dot"></div>
+      <div class="note-content">
+        <div class="note-from">来自 云云 · 昨天</div>
+        <div class="note-text">你最近攒钱的进度好快！我今天也偷偷存了一笔 ✨</div>
+        <div class="note-task-ref">📌 去成都旅行 · 攒钱阶段</div>
+      </div>
+    </div>
+    <div class="note-item">
+      <div class="note-dot" style="background:var(--coral-light)"></div>
+      <div class="note-content">
+        <div class="note-from">来自 云云 · 3天前</div>
+        <div class="note-text">这个阶段有点难，但我们一起加油～你上次说的那个方法我觉得很可行哦</div>
+        <div class="note-task-ref">📌 去泰国公证结婚 · 准备材料</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <div class="nav-item active" onclick="goTo('home', this)">
+    <div class="nav-icon">⚓</div>
+    <div class="nav-label">首页</div>
+  </div>
+  <div class="nav-item" onclick="goTo('wish', this)">
+    <div class="nav-icon">🪄</div>
+    <div class="nav-label">心愿池</div>
+  </div>
+  <div class="nav-item" onclick="goTo('plan', this)">
+    <div class="nav-icon">🗺</div>
+    <div class="nav-label">计划</div>
+  </div>
+  <div class="nav-item" onclick="goTo('us', this)">
+    <div class="nav-icon">💛</div>
+    <div class="nav-label">我们</div>
+  </div>
+</nav>
+
+<!-- ADD WISH OVERLAY -->
+<div class="overlay" id="wishOverlay" onclick="closeWishAdd(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">许下一个心愿</div>
+    <div class="form-label">这个心愿是什么？</div>
+    <input class="form-input" id="wishInput" placeholder="比如：一起去日本赏樱…" />
+    <div id="wishAI" style="display:none">
+      <div class="ai-loading" id="wishLoading" style="display:none">
+        <div class="dot-spin"><span></span><span></span><span></span></div>
+        <span>AI 正在帮你规划步骤…</span>
+      </div>
+      <div id="wishPreview" style="display:none">
+        <div class="ai-preview">
+          <div class="ai-preview-label">✦ AI 建议的步骤</div>
+          <div id="wishStepList"></div>
+        </div>
+      </div>
+    </div>
+    <button class="submit-btn" id="wishSubmitBtn" onclick="submitWish()">✨ 放入心愿池</button>
+  </div>
+</div>
+
+<!-- CELEBRATE -->
+<div class="celebrate-overlay" id="celebrateEl">
+  <canvas class="confetti-canvas" id="confettiCanvas"></canvas>
+  <div class="celebrate-card">
+    <span class="cel-emoji">🎉</span>
+    <div class="cel-title">阶段完成！</div>
+    <div class="cel-sub" id="celSub">你们又向前航行了一步。</div>
+    <button class="cel-close" onclick="closeCelebrate()">继续前进 ⛵</button>
+  </div>
+</div>
+
+<script>
+const state = {
+  currentScreen: 'home',
+  currentUser: 'A',
+  currentCheckin: null,
+  wishes: [
+    {
+      id: 1,
+      title: '一起去日本京都赏樱花',
+      by: '小满',
+      steps: ['研究樱花季时间和地点', '规划行程和预算', '预订机票和住宿', '准备旅行必备物品']
+    },
+    {
+      id: 2,
+      title: '开一个关于女同生活的播客',
+      by: '云云',
+      steps: ['确定播客主题和受众定位', '测试录音设备', '录制第一集试播', '选择发布平台']
+    }
+  ],
+  plans: [
+    {
+      id: 1,
+      type: 'future',
+      title: '去成都旅行',
+      stages: [
+        { id: 'a', name: '攒旅行经费', ddl: '3月底', progress: 72, status: 'active',
+          checkins: [
+            { user: 'A', name: '小满', text: '今天把咖啡钱存起来了，感觉很有仪式感～', time: '09:21', progDelta: 5 },
+            { user: 'B', name: '云云', text: '我转了这个月零花钱的一部分！离目标越来越近了 ✨', time: '12:08', progDelta: 8 },
+            { user: 'A', name: '小满', text: '又存了一点！今天看了一个成都美食攻略，超级想去！', time: '20:45', progDelta: 4 },
+          ]
+        },
+        { id: 'b', name: '定机票和酒店', ddl: '4月底', progress: 0, status: 'upcoming' },
+        { id: 'c', name: '做旅游攻略', ddl: '5月底', progress: 0, status: 'upcoming' },
+      ]
+    },
+    {
+      id: 2,
+      type: 'future',
+      title: '去泰国公证结婚',
+      stages: [
+        { id: 'd', name: '了解公证法律要求', ddl: '已完成', progress: 100, status: 'done',
+          checkins: [
+            { user: 'A', name: '小满', text: '查了清迈的公证机构，找到一家评价很好的！', time: '14:30', progDelta: 40 },
+            { user: 'B', name: '云云', text: '我在小红书上找到了很详细的攻略帖子，发给你看', time: '16:55', progDelta: 60 },
+          ]
+        },
+        { id: 'e', name: '准备材料', ddl: '4月底', progress: 35, status: 'active',
+          checkins: [
+            { user: 'B', name: '云云', text: '护照查了一下还有两年多，没问题的！', time: '10:15', progDelta: 15 },
+            { user: 'A', name: '小满', text: '户籍证明需要回老家办，准备下个月回去的时候顺便弄', time: '19:02', progDelta: 20 },
+          ]
+        },
+        { id: 'f', name: '预订公证机构', ddl: '5月底', progress: 0, status: 'upcoming' },
+      ]
+    },
+    {
+      id: 3,
+      type: 'grow',
+      title: '每周一起运动两次',
+      stages: [
+        { id: 'g', name: '第一个月打卡', ddl: '本月底', progress: 50, status: 'active',
+          checkins: [
+            { user: 'A', name: '小满', text: '今天早上跑了3公里！腿有点酸但很爽', time: '07:45', progDelta: 12 },
+            { user: 'B', name: '云云', text: '晚上做了30分钟瑜伽，感觉整个人都放松了～', time: '21:20', progDelta: 13 },
+          ]
+        },
+      ]
+    }
+  ]
+};
+
+const AI_STEPS_MAP = {
+  default: ['收集相关资料和信息', '评估所需时间和预算', '制定详细执行计划', '迈出第一步行动']
+};
+
+function goTo(screen, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  if (screen === 'home') {
+    document.getElementById('homeScreen').classList.add('active');
+    renderToday();
+  } else if (screen === 'wish') {
+    document.getElementById('wishScreen').classList.add('active');
+    renderWishes();
+  } else if (screen === 'plan') {
+    document.getElementById('planScreen').classList.add('active');
+    renderPlans();
+  } else if (screen === 'us') {
+    document.getElementById('usScreen').classList.add('active');
+  }
+  state.currentScreen = screen;
+}
+
+function renderToday() {
+  const container = document.getElementById('todayCards');
+  container.innerHTML = '';
+  const activeStages = [];
+  state.plans.forEach(p => {
+    p.stages.forEach(s => {
+      if (s.status === 'active') activeStages.push({ plan: p, stage: s });
+    });
+  });
+  activeStages.forEach((item, i) => {
+    const { plan, stage } = item;
+    const div = document.createElement('div');
+    div.className = 'today-card';
+    div.style.animationDelay = (i * 0.07) + 's';
+    div.onclick = () => openCheckin(plan.id, stage.id);
+    div.innerHTML = `
+      <div class="today-card-header">
+        <div>
+          <div class="today-plan-name">${plan.title}</div>
+          <div class="today-stage-name">${stage.name}</div>
+        </div>
+        <div class="today-ddl">截止 ${stage.ddl}</div>
+      </div>
+      <div class="progress-row">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" style="width:${stage.progress}%"></div>
+        </div>
+        <div class="progress-pct">${stage.progress}%</div>
+      </div>
+      <div class="today-avatars">
+        <div class="ta"><div class="ta-dot dot-a"></div>小满</div>
+        <div class="ta"><div class="ta-dot dot-b"></div>云云</div>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function renderWishes() {
+  const container = document.getElementById('wishList');
+  container.innerHTML = '';
+  state.wishes.forEach((w, i) => {
+    const div = document.createElement('div');
+    div.className = 'wish-card';
+    div.style.animationDelay = (i * 0.07) + 's';
+    const stepsHTML = w.steps.slice(0,3).map(s => `<div class="wish-step-item">${s}</div>`).join('');
+    div.innerHTML = `
+      <div class="wish-card-header">
+        <div class="wish-title">${w.title}</div>
+      </div>
+      <div class="wish-by"><div class="ta-dot dot-${w.by === '小满' ? 'a' : 'b'}" style="width:7px;height:7px;border-radius:50%;flex-shrink:0;"></div> ${w.by} 许下的愿望</div>
+      <div class="wish-steps-preview">${stepsHTML}</div>
+      <button class="wish-convert-btn" onclick="convertWish(${w.id}, event)">⛵ 转化为计划</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function renderPlans() {
+  const container = document.getElementById('planList');
+  container.innerHTML = '';
+  state.plans.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'plan-card';
+    div.style.animationDelay = (i * 0.07) + 's';
+    const stagesHTML = p.stages.map(s => `
+      <div class="stage-item" onclick="openCheckin(${p.id},'${s.id}');event.stopPropagation()">
+        <div class="stage-status-dot ${s.status}"></div>
+        <div class="stage-info">
+          <div class="stage-name">${s.name}</div>
+          <div class="stage-ddl">截止 ${s.ddl}</div>
+        </div>
+        <div class="stage-prog">${s.progress}%</div>
+      </div>
+    `).join('');
+    const badge = p.type === 'future'
+      ? '<span class="plan-type-badge badge-future">⛵ 未来规划</span>'
+      : '<span class="plan-type-badge badge-grow">🌱 共同成长</span>';
+    div.innerHTML = `
+      <div class="plan-card-top">
+        ${badge}
+        <div class="plan-title">${p.title}</div>
+      </div>
+      <div class="stage-list">${stagesHTML}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function openCheckin(planId, stageId) {
+  const plan = state.plans.find(p => p.id === planId);
+  const stage = plan.stages.find(s => s.id === stageId);
+  state.currentCheckin = { plan, stage };
+
+  document.getElementById('ci-plan-name').textContent = plan.title;
+  document.getElementById('ci-stage-title').textContent = stage.name;
+  document.getElementById('ci-pct').textContent = stage.progress + '%';
+  document.getElementById('progFill').style.width = stage.progress + '%';
+  document.getElementById('progThumb').style.left = stage.progress + '%';
+
+  renderChat(stage);
+  setupProgressDrag(stage);
+
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('checkinScreen').style.display = 'flex';
+  document.getElementById('checkinScreen').classList.add('active');
+  document.querySelector('.bottom-nav').style.display = 'none';
+}
+
+function renderChat(stage) {
+  const area = document.getElementById('chatArea');
+  area.innerHTML = '';
+
+  if (stage.status === 'done') {
+    const chip = document.createElement('div');
+    chip.style.cssText = 'text-align:center;padding:8px 0 4px;';
+    chip.innerHTML = '<span class="note-chip">📝 小纸条 · 来自云云</span>';
+    chip.onclick = () => alert('「这个阶段我们完成得很好！期待下一站 ✨」\n\n— 云云');
+    area.appendChild(chip);
+  }
+
+  const divider = document.createElement('div');
+  divider.className = 'chat-date-divider';
+  divider.textContent = '今日记录';
+  area.appendChild(divider);
+
+  stage.checkins.forEach(c => {
+    const isMe = c.user === 'A';
+    const wrap = document.createElement('div');
+    wrap.className = 'chat-bubble-wrap' + (isMe ? ' me' : '');
+    wrap.innerHTML = `
+      <div class="chat-avatar av-${c.user.toLowerCase()}">${c.name[0]}</div>
+      <div class="chat-bubble">
+        <div class="bubble-name">${c.name}</div>
+        <div class="bubble-text">${c.text}</div>
+        <div class="bubble-prog-update">▲ +${c.progDelta}%</div>
+        <div class="bubble-time">${c.time}</div>
+      </div>
+    `;
+    area.appendChild(wrap);
+  });
+  area.scrollTop = area.scrollHeight;
+}
+
+function setupProgressDrag(stage) {
+  const track = document.getElementById('progTrack');
+  const fill = document.getElementById('progFill');
+  const thumb = document.getElementById('progThumb');
+  const pct = document.getElementById('ci-pct');
+  let dragging = false;
+
+  function setProgress(clientX) {
+    const rect = track.getBoundingClientRect();
+    let val = Math.round(Math.max(0, Math.min(100, (clientX - rect.left) / rect.width * 100)));
+    stage.progress = val;
+    fill.style.width = val + '%';
+    thumb.style.left = val + '%';
+    pct.textContent = val + '%';
+    if (val === 100) {
+      setTimeout(() => showCelebrate(stage.name), 400);
+    }
+  }
+  track.addEventListener('mousedown', e => { dragging = true; setProgress(e.clientX); });
+  track.addEventListener('touchstart', e => { dragging = true; setProgress(e.touches[0].clientX); }, { passive: true });
+  document.addEventListener('mousemove', e => { if (dragging) setProgress(e.clientX); });
+  document.addEventListener('touchmove', e => { if (dragging) setProgress(e.touches[0].clientX); }, { passive: true });
+  document.addEventListener('mouseup', () => dragging = false);
+  document.addEventListener('touchend', () => dragging = false);
+}
+
+function toggleWho() {
+  state.currentUser = state.currentUser === 'A' ? 'B' : 'A';
+  const dot = document.getElementById('whoColorDot');
+  const label = document.getElementById('whoLabel');
+  if (state.currentUser === 'A') {
+    dot.style.background = 'var(--coral)';
+    label.textContent = '小满';
+  } else {
+    dot.style.background = 'var(--teal-mid)';
+    label.textContent = '云云';
+  }
+}
+
+function sendCheckin() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  const { stage } = state.currentCheckin;
+  const isA = state.currentUser === 'A';
+  const name = isA ? '小满' : '云云';
+  const newCheckin = { user: state.currentUser, name, text, time: '刚刚', progDelta: 5 };
+  stage.checkins.push(newCheckin);
+  stage.progress = Math.min(100, stage.progress + 5);
+  document.getElementById('ci-pct').textContent = stage.progress + '%';
+  document.getElementById('progFill').style.width = stage.progress + '%';
+  document.getElementById('progThumb').style.left = stage.progress + '%';
+  renderChat(stage);
+  renderToday();
+  input.value = '';
+  if (stage.progress === 100) setTimeout(() => showCelebrate(stage.name), 300);
+}
+
+function backFromCheckin() {
+  document.getElementById('checkinScreen').classList.remove('active');
+  document.getElementById('checkinScreen').style.display = 'none';
+  document.querySelector('.bottom-nav').style.display = 'flex';
+  if (state.currentScreen === 'plan') {
+    document.getElementById('planScreen').classList.add('active');
+    renderPlans();
+  } else {
+    document.getElementById('homeScreen').classList.add('active');
+    renderToday();
+  }
+}
+
+function openWishAdd() { document.getElementById('wishOverlay').classList.add('show'); }
+function closeWishAdd(e) {
+  if (e.target === document.getElementById('wishOverlay'))
+    document.getElementById('wishOverlay').classList.remove('show');
+}
+
+async function submitWish() {
+  const title = document.getElementById('wishInput').value.trim();
+  if (!title) { document.getElementById('wishInput').focus(); return; }
+  const btn = document.getElementById('wishSubmitBtn');
+  btn.disabled = true; btn.textContent = '正在规划…';
+  document.getElementById('wishAI').style.display = 'block';
+  document.getElementById('wishLoading').style.display = 'flex';
+  document.getElementById('wishPreview').style.display = 'none';
+  await new Promise(r => setTimeout(r, 1500));
+  document.getElementById('wishLoading').style.display = 'none';
+  document.getElementById('wishPreview').style.display = 'block';
+  const steps = AI_STEPS_MAP.default;
+  const list = document.getElementById('wishStepList');
+  list.innerHTML = steps.map((s, i) => `
+    <div class="ai-step-pill">
+      <div class="ai-step-num">${i+1}</div>
+      ${s}
+    </div>
+  `).join('');
+  btn.disabled = false; btn.textContent = '✨ 放入心愿池';
+  btn.onclick = () => finalAddWish(title, steps);
+}
+
+function finalAddWish(title, steps) {
+  const name = state.currentUser === 'A' ? '小满' : '云云';
+  state.wishes.unshift({ id: Date.now(), title, by: name, steps });
+  document.getElementById('wishOverlay').classList.remove('show');
+  document.getElementById('wishInput').value = '';
+  document.getElementById('wishAI').style.display = 'none';
+  const btn = document.getElementById('wishSubmitBtn');
+  btn.textContent = '✨ 放入心愿池'; btn.onclick = submitWish;
+  renderWishes();
+}
+
+function convertWish(id, e) {
+  e.stopPropagation();
+  const wish = state.wishes.find(w => w.id === id);
+  if (!wish) return;
+  const newPlan = {
+    id: Date.now(), type: 'future', title: wish.title,
+    stages: wish.steps.map((s, i) => ({
+      id: 'new_' + i, name: s, ddl: '待设定',
+      progress: 0, status: i === 0 ? 'active' : 'upcoming', checkins: []
+    }))
+  };
+  state.plans.unshift(newPlan);
+  state.wishes = state.wishes.filter(w => w.id !== id);
+  renderWishes();
+  setTimeout(() => {
+    document.getElementById('planScreen').classList.add('active');
+    document.getElementById('wishScreen').classList.remove('active');
+    document.querySelectorAll('.nav-item')[2].classList.add('active');
+    document.querySelectorAll('.nav-item')[1].classList.remove('active');
+    state.currentScreen = 'plan';
+    renderPlans();
+  }, 200);
+}
+
+function showCelebrate(name) {
+  document.getElementById('celSub').textContent = `「${name}」阶段完成！两人一起向前航行了一步。`;
+  document.getElementById('celebrateEl').classList.add('show');
+  spawnConfetti();
+}
+
+function closeCelebrate() {
+  document.getElementById('celebrateEl').classList.remove('show');
+  const canvas = document.getElementById('confettiCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function spawnConfetti() {
+  const canvas = document.getElementById('confettiCanvas');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const colors = ['#E8856A','#5E9BAA','#D4A84B','#B8CDD8','#C45A3E','#3D7A8A'];
+  const pieces = Array.from({ length: 80 }, () => ({
+    x: Math.random() * canvas.width,
+    y: -10,
+    r: 4 + Math.random() * 6,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    vx: (Math.random() - 0.5) * 3,
+    vy: 2 + Math.random() * 3,
+    rot: Math.random() * 360,
+    rotV: (Math.random() - 0.5) * 8,
+  }));
+  let frame;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    pieces.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.rot += p.rotV;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r * 0.6);
+      ctx.restore();
+    });
+    if (pieces.some(p => p.y < canvas.height)) frame = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+renderToday();
+</script>
+</body>
+</html>
